@@ -5,12 +5,19 @@ import {
   View,
   Image,
   AppRegistry,
-  TouchableHighlight} from 'react-native';
+  TouchableHighlight,
+  WebView} from 'react-native';
 import Voice from 'react-native-voice';
 import tts from 'react-native-android-speech';
 import axios from 'axios';
-class App extends Component {
+//  import HTMLParser from 'fast-html-parser';
+const parseString = require('react-native-xml2js').parseString;
 
+const APPID = '5VLKR7-UH9PL2G8Y6';
+
+
+class App extends Component {
+  
   constructor(props) {
     super(props);
     this.state = {
@@ -20,6 +27,7 @@ class App extends Component {
       end: '',
       started: '',
       results: [],
+      data: null
     };
     Voice.onSpeechStart = this.onSpeechStart.bind(this);
     Voice.onSpeechRecognized = this.onSpeechRecognized.bind(this);
@@ -113,22 +121,26 @@ class App extends Component {
 
   fetchResult = () => {
     if (this.state.results.length > 0) {
-      axios.get('https://en.wikipedia.org/wiki/' + this.state.results[0])
-        .then(function (response) {
-          console.log(response.data);
-        })
-        .catch(function (error) {
-          console.log(error);
+      const data = null;
+      fetch('http://api.wolframalpha.com/v2/query?appid=5VLKR7-UH9PL2G8Y6&input=' + this.state.results[0])
+      .then(response => response.text())
+      .then((response) => {
+        parseString(response, function (err, result) {
+         data = response
         });
+
+      
+        
+      }).catch((err) => {
+        console.log('fetch', err)
+      });
+      console.log(data);
     }
   }
 
   render() {
-    
-   
     return (
       <View style={styles.container}>
-       
         <Text style={styles.instructions}>
           Press the button and start speaking.
         </Text>
