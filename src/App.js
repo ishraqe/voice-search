@@ -27,7 +27,11 @@ class App extends Component {
       end: '',
       started: '',
       results: [],
-      data: null
+      data: null,
+      content: {
+        title :  '',
+        desc : ''
+      }
     };
     Voice.onSpeechStart = this.onSpeechStart.bind(this);
     Voice.onSpeechRecognized = this.onSpeechRecognized.bind(this);
@@ -119,34 +123,46 @@ class App extends Component {
     });
   }
 
-  fetchResult = () => {
-    if (this.state.results.length > 0) {
-      const data = null;
-      fetch('http://api.wolframalpha.com/v2/query?appid=5VLKR7-UH9PL2G8Y6&input=' + this.state.results[0])
-      .then(response => response.text())
-      .then((response) => {
-        parseString(response, function (err, result) {
-         data = response
-        });
 
-      
-        
-      }).catch((err) => {
-        console.log('fetch', err)
-      });
-      console.log(data);
+  _result() {
+    var that = this;
+
+    try {
+      if (this.state.results.length > 0) {
+        fetch('http://api.wolframalpha.com/v2/query?appid=5VLKR7-UH9PL2G8Y6&input=' + this.state.results[0])
+          .then(response => response.text())
+          .then((response) => {
+             parseString(response, function (err, result) {
+               console.log(result);
+               
+               that.setState({
+                 content: {
+                   title: result.queryresult.pod
+                 }
+               })
+            });
+          })
+          .catch((err) => {
+            console.log('fetch', err)
+          });
+      }
+    } catch (e) {
+      console.error(e);
     }
   }
 
+
+
   render() {
+    console.log(this.state.content.title);
+    
     return (
       <View style={styles.container}>
+        <Text style={styles.instructions}>{this.state.content.title}</Text>
         <Text style={styles.instructions}>
           Press the button and start speaking.
         </Text>
-       
         <Text style={styles.stat}> {this.state.results[0]} </Text>
-        
         <TouchableHighlight onPress={this._startRecognizing.bind(this)}>
           <Text style={styles.action}> 
             Start
@@ -170,7 +186,7 @@ class App extends Component {
             Destroy
           </Text>
         </TouchableHighlight>
-        {this.fetchResult()}
+        {this._result()}
       </View>
     );
   }
