@@ -4,13 +4,11 @@ import {
   Text,
   View,
   Image,
-  AppRegistry,
   TouchableHighlight,
   WebView} from 'react-native';
 import Voice from 'react-native-voice';
 import tts from 'react-native-android-speech';
 import axios from 'axios';
-//  import HTMLParser from 'fast-html-parser';
 const parseString = require('react-native-xml2js').parseString;
 
 const APPID = '5VLKR7-UH9PL2G8Y6';
@@ -28,10 +26,7 @@ class App extends Component {
       started: '',
       results: [],
       data: null,
-      content: {
-        title :  '',
-        desc : ''
-      }
+      content: null
     };
     Voice.onSpeechStart = this.onSpeechStart.bind(this);
     Voice.onSpeechRecognized = this.onSpeechRecognized.bind(this);
@@ -94,6 +89,10 @@ class App extends Component {
   async _stopRecognizing(e) {
     try {
       await Voice.stop();
+      this.setState({
+        data: null,
+        content: null
+      })
     } catch (e) {
       console.error(e);
     }
@@ -102,6 +101,10 @@ class App extends Component {
   async _cancelRecognizing(e) {
     try {
       await Voice.cancel();
+      this.setState({
+        data:  null,
+        content: null
+      })
     } catch (e) {
       console.error(e);
     }
@@ -119,14 +122,15 @@ class App extends Component {
       error: '',
       started: '',
       results: [],
-      end: ''
+      end: '',
+      data : null,
+      content : null
     });
   }
 
 
   _result() {
     var that = this;
-
     try {
       if (this.state.results.length > 0) {
         fetch('http://api.wolframalpha.com/v2/query?appid=5VLKR7-UH9PL2G8Y6&input=' + this.state.results[0])
@@ -134,11 +138,8 @@ class App extends Component {
           .then((response) => {
              parseString(response, function (err, result) {
                console.log(result);
-               
                that.setState({
-                 content: {
-                   title: result.queryresult.pod
-                 }
+                 content: result.queryresult.pod
                })
             });
           })
@@ -151,14 +152,37 @@ class App extends Component {
     }
   }
 
+  renderDesc () {
+    if (this.state.content) {
+      this.renderVoice();
+      return (
+        <Text style={styles.instructions}>{this.state.content[1].subpod[0].plaintext}</Text>
+      );
+    }
+  }
 
+  renderVoice = () => {
+    if (this.state.content) {
+      setTimeout(() => {
+        tts.speak({
+          text: this.state.content[1].subpod[0].plaintext.toString(), // Mandatory
+          language: 'en', // Optional Paramenter Default is en you can provide any supported lang by TTS
+          country: 'US' // Optional Paramenter Default is null, it provoques that system selects its default
+        }).then(isSpeaking => {
+          //Success Callback
+          console.log(isSpeaking);
+        }).catch(error => {
+          //Errror Callback
+          console.log(error)
+        });
+      }, 500);
+    }
+  } 
 
-  render() {
-    console.log(this.state.content.title);
-    
+  render() {    
     return (
       <View style={styles.container}>
-        <Text style={styles.instructions}>{this.state.content.title}</Text>
+       {this.renderDesc()}
         <Text style={styles.instructions}>
           Press the button and start speaking.
         </Text>
