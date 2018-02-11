@@ -5,10 +5,14 @@ import {
   View,
   Image,
   TouchableHighlight,
-  WebView} from 'react-native';
+  ScrollView,
+  TouchableWithoutFeedback,
+  Animated} from 'react-native';
 import Voice from 'react-native-voice';
 import tts from 'react-native-android-speech';
 import axios from 'axios';
+
+
 const parseString = require('react-native-xml2js').parseString;
 
 const APPID = '5VLKR7-UH9PL2G8Y6';
@@ -182,7 +186,34 @@ class App extends Component {
   render() {    
     return (
       <View style={styles.container}>
-       {this.renderDesc()}
+        <View style={styles.questionContainer}>
+            <Text style={[styles.textColor, styles.question]}>
+              What is fear ?
+            </Text>
+          <Text style={styles.borderHalf}>c</Text>
+        </View>
+        <View style={styles.answerContainer}>
+          <Text style={[styles.textColor, styles.answer]} >Fear is the path to the dark side</Text>
+          <Text style={[styles.borderHalf, { borderBottomColor: '#567DE5'}]}>c</Text>
+        </View>
+        <View style={styles.waveContainer}>
+          <Animated.View>
+            <Text>hello</Text>
+          </Animated.View>
+        </View>
+        <View style={styles.buttonContainer}>
+          <TouchableWithoutFeedback>
+            <View 
+            style={styles.buttonWrapper}>
+              <Image
+                style={{height: 24, width: 24}}
+                source={require('./assets/microphone.png')}
+              />
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+
+      {/* {this.renderDesc()}
         <Text style={styles.instructions}>
           Press the button and start speaking.
         </Text>
@@ -210,22 +241,65 @@ class App extends Component {
             Destroy
           </Text>
         </TouchableHighlight>
-        {this._result()}
+        {this._result()} */}
       </View>
     );
   }
 }
 
 const styles = StyleSheet.create({
+ 
+  container: {
+    height: '100%',
+    width:'100%',
+    backgroundColor: '#1B2B43',   
+  },
+  questionContainer: {
+    flex: 1,
+    alignItems: 'flex-end',
+    paddingRight: 20,
+    paddingTop: 20,
+  },
+  question: {
+    fontSize : 30,
+    fontWeight: "100",
+  },
+  answer : {
+    fontSize: 35,
+    fontWeight: "200",
+  },
+  borderHalf : {
+    color: 'transparent',
+    width: 60,
+    borderBottomWidth:  3,
+    borderBottomColor: '#C4D3F8'
+  },
+  answerContainer : {
+    flex: 1,
+    alignItems: 'flex-start',
+    paddingLeft: 20,
+    paddingTop: 20,
+  },
+  waveContainer : {
+    flex: 1
+  },
+  buttonContainer : {
+    flex: 1,
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    paddingBottom: 20
+  },
+  buttonWrapper : {
+    height: 50,
+    width: 50,
+    borderRadius : 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#C70065'
+  },
   button: {
     width: 50,
     height: 50,
-  },
-  container: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#2D4A73',   
   },
   welcome: {
     fontSize: 20,
@@ -248,6 +322,9 @@ const styles = StyleSheet.create({
     color: '#B0171F',
     marginBottom: 1,
   },
+  textColor : {
+    color: '#BDC4D6'
+  }
 });
 
 
