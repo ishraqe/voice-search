@@ -11,8 +11,6 @@ import {
 import Voice from 'react-native-voice';
 import tts from 'react-native-android-speech';
 import axios from 'axios';
-
-
 const parseString = require('react-native-xml2js').parseString;
 
 const APPID = '5VLKR7-UH9PL2G8Y6';
@@ -30,8 +28,10 @@ class App extends Component {
       started: '',
       results: [],
       data: null,
-      content: null
+      content: null,
+      enableRec : false
     };
+    
     Voice.onSpeechStart = this.onSpeechStart.bind(this);
     Voice.onSpeechRecognized = this.onSpeechRecognized.bind(this);
     Voice.onSpeechEnd = this.onSpeechEnd.bind(this);
@@ -43,6 +43,8 @@ class App extends Component {
     Voice.destroy().then(Voice.removeAllListeners);
   }
 
+
+  
   onSpeechStart(e) {
     this.setState({
       started: '√',
@@ -196,13 +198,8 @@ class App extends Component {
           <Text style={[styles.textColor, styles.answer]} >Fear is the path to the dark side</Text>
           <Text style={[styles.borderHalf, { borderBottomColor: '#567DE5'}]}>c</Text>
         </View>
-        <View style={styles.waveContainer}>
-          <Animated.View>
-            <Text>hello</Text>
-          </Animated.View>
-        </View>
         <View style={styles.buttonContainer}>
-          <TouchableWithoutFeedback>
+          <TouchableHighlight onPress={this._startRecognizing.bind(this)}>
             <View 
             style={styles.buttonWrapper}>
               <Image
@@ -210,7 +207,7 @@ class App extends Component {
                 source={require('./assets/microphone.png')}
               />
             </View>
-          </TouchableWithoutFeedback>
+          </TouchableHighlight>
         </View>
 
       {/* {this.renderDesc()}
@@ -324,6 +321,14 @@ const styles = StyleSheet.create({
   },
   textColor : {
     color: '#BDC4D6'
+  },
+  wave : {
+    height: 1,
+    width: '100%',
+    backgroundColor: '#fff',
+    opacity: .4,
+    position: 'absolute',
+    top: 3 ,
   }
 });
 
