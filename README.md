@@ -1,7 +1,7 @@
 # voice-search
 
 ### Introduction
-This is a simple practice app works with vocies. It converts voice to text , performs a query and displays a result and reads it along with that. 
+This is a simple practice app works with vocies. It converts voice to text , performs a query and displays a result and reads it along with that. Although its not completely finished :p . 
 
 ![alt text](https://raw.githubusercontent.com/ishraqe/voice-search/master/src/assets/0.png)
 
