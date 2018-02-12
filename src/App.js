@@ -29,7 +29,8 @@ class App extends Component {
       results: [],
       data: null,
       content: null,
-      enableRec : false
+      enableRec : false,
+      tryAgain : false
     };
     
     Voice.onSpeechStart = this.onSpeechStart.bind(this);
@@ -56,7 +57,7 @@ class App extends Component {
       recognized: '√',
     });
   }
-
+  tryAgain
   onSpeechEnd(e) {
     this.setState({
       end: '√',
@@ -96,9 +97,22 @@ class App extends Component {
     try {
       await Voice.stop();
       this.setState({
+        recognized: '',
+        pitch: '',
+        error: '',
+        end: '',
+        started: '',
+        results: [],
         data: null,
         content: null
-      })
+      });
+      tts.shutDown()
+        .then(isStopped => {
+          console.log(isStopped);
+        })
+        .catch(error => {
+          console.log(error);
+        }); 
     } catch (e) {
       console.error(e);
     }
@@ -144,9 +158,15 @@ class App extends Component {
           .then((response) => {
              parseString(response, function (err, result) {
                console.log(result);
-               that.setState({
-                 content: result.queryresult.pod
-               })
+               if (!result.queryresult.$.success) {
+                 this.setState ({
+                    tryAgain : true
+                 });
+               } else if (result.queryresult.$.success) {
+                 that.setState({
+                   content: result.queryresult.pod
+                 })
+               }
             });
           })
           .catch((err) => {
@@ -157,57 +177,102 @@ class App extends Component {
       console.error(e);
     }
   }
-
+  renderQuestion () {
+    if (this.state.results.length > 0) {
+     return (
+        <Text style={[styles.textColor, styles.question]}>
+          {this.state.results[0]} ?
+        </Text>
+     );
+   }
+   
+    return (
+      <Text style={[styles.textColor, styles.question]}>
+        Press the button and start speaking.
+      </Text>
+    );
+  }
   renderDesc () {
     if (this.state.content) {
       this.renderVoice();
       return (
-        <Text style={styles.instructions}>{this.state.content[1].subpod[0].plaintext}</Text>
+        <View style={styles.answerContainer}>
+          <Text style={[styles.textColor, styles.answer]} >{this.state.content[1].subpod[0].plaintext}</Text>         
+          <Text style={[styles.borderHalf, { borderBottomColor: '#567DE5' }]}>c</Text>
+        </View>
+      );
+    }
+    if (this.state.tryAgain) {
+      return (
+        <View style={styles.answerContainer}>
+          <Text style={[styles.textColor, styles.answer]} >No results found !!</Text>
+          <Text style={[styles.borderHalf, { borderBottomColor: '#567DE5' }]}>c</Text>
+        </View>
       );
     }
   }
 
   renderVoice = () => {
     if (this.state.content) {
-      setTimeout(() => {
-        tts.speak({
-          text: this.state.content[1].subpod[0].plaintext.toString(), // Mandatory
-          language: 'en', // Optional Paramenter Default is en you can provide any supported lang by TTS
-          country: 'US' // Optional Paramenter Default is null, it provoques that system selects its default
-        }).then(isSpeaking => {
-          //Success Callback
-          console.log(isSpeaking);
-        }).catch(error => {
-          //Errror Callback
-          console.log(error)
-        });
-      }, 500);
+      tts.speak({
+        text: this.state.content[1].subpod[0].plaintext.toString(), // Mandatory
+        language: 'en', 
+        country: 'US' 
+      }).then(isSpeaking => {  
+        console.log(this.state.isSpeaking);
+      }).catch(error => {
+        console.log(error)
+      });
+    }else if (this.state.tryAgain) {
+      tts.speak({
+        text:'No results found !!, please try again', // Mandatory
+        language: 'en',
+        country: 'US'
+      }).then(isSpeaking => {
+        console.log(this.state.isSpeaking);
+      }).catch(error => {
+        console.log(error)
+      });
     }
   } 
+  renderStartStopButton = () => {
+    if (this.state.started === '√') {
+      return (
+        <TouchableHighlight onPress={this._stopRecognizing.bind(this)}>
+          <View
+            style={styles.buttonWrapper}>
+            <Image
+              style={{ height: 24, width: 24 }}
+              source={require('./assets/microphone.png')}
+            />
+          </View>
+        </TouchableHighlight>
+      );
+    }
+    return (
+      <TouchableHighlight onPress={this._startRecognizing.bind(this)}>
+        <View
+          style={styles.buttonStopWrapper}>
+          <Image
+            style={{ height: 24, width: 24 }}
+            source={require('./assets/microphone.png')}
+          />
+        </View>
+      </TouchableHighlight>
+    );
+  }
 
   render() {    
     return (
       <View style={styles.container}>
         <View style={styles.questionContainer}>
-            <Text style={[styles.textColor, styles.question]}>
-              What is fear ?
-            </Text>
+          {this.renderQuestion()}
           <Text style={styles.borderHalf}>c</Text>
         </View>
-        <View style={styles.answerContainer}>
-          <Text style={[styles.textColor, styles.answer]} >Fear is the path to the dark side</Text>
-          <Text style={[styles.borderHalf, { borderBottomColor: '#567DE5'}]}>c</Text>
-        </View>
+          {this.renderDesc()}
         <View style={styles.buttonContainer}>
-          <TouchableHighlight onPress={this._startRecognizing.bind(this)}>
-            <View 
-            style={styles.buttonWrapper}>
-              <Image
-                style={{height: 24, width: 24}}
-                source={require('./assets/microphone.png')}
-              />
-            </View>
-          </TouchableHighlight>
+          {this.renderStartStopButton()}
+          {this._result()}
         </View>
 
       {/* {this.renderDesc()}
@@ -267,7 +332,7 @@ const styles = StyleSheet.create({
   },
   borderHalf : {
     color: 'transparent',
-    width: 60,
+    width: 100,
     borderBottomWidth:  3,
     borderBottomColor: '#C4D3F8'
   },
@@ -293,6 +358,14 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: '#C70065'
+  },
+  buttonStopWrapper: {
+    height: 50,
+    width: 50,
+    borderRadius: 25,
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: 'green'
   },
   button: {
     width: 50,
