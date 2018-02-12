@@ -7,7 +7,8 @@ import {
   TouchableHighlight,
   ScrollView,
   TouchableWithoutFeedback,
-  Animated} from 'react-native';
+  Animated,
+  ActivityIndicator} from 'react-native';
 import Voice from 'react-native-voice';
 import tts from 'react-native-android-speech';
 import axios from 'axios';
@@ -29,8 +30,8 @@ class App extends Component {
       results: [],
       data: null,
       content: null,
-      enableRec : false,
-      tryAgain : false
+      tryAgain : false,
+      loading : false
     };
     
     Voice.onSpeechStart = this.onSpeechStart.bind(this);
@@ -54,13 +55,12 @@ class App extends Component {
 
   onSpeechRecognized(e) {
     this.setState({
-      recognized: '√',
+      recognized: '√'
     });
   }
-  tryAgain
   onSpeechEnd(e) {
     this.setState({
-      end: '√',
+      end: '√'
     });
   }
 
@@ -74,6 +74,12 @@ class App extends Component {
     this.setState({
       results: e.value,
     });
+   if(this.state.results.length > 0) {
+     this.setState({
+       loading: true
+     });
+   }
+    
   }
 
   async _startRecognizing(e) {
@@ -83,7 +89,6 @@ class App extends Component {
       error: '',
       started: '',
       results: [],
-      partialResults: [],
       end: ''
     });
     try {
@@ -94,6 +99,7 @@ class App extends Component {
   }
 
   async _stopRecognizing(e) {
+   
     try {
       await Voice.stop();
       this.setState({
@@ -106,6 +112,7 @@ class App extends Component {
         data: null,
         content: null
       });
+      
       tts.shutDown()
         .then(isStopped => {
           console.log(isStopped);
@@ -153,6 +160,7 @@ class App extends Component {
     var that = this;
     try {
       if (this.state.results.length > 0) {
+       
         fetch('http://api.wolframalpha.com/v2/query?appid=5VLKR7-UH9PL2G8Y6&input=' + this.state.results[0])
           .then(response => response.text())
           .then((response) => {
@@ -164,7 +172,8 @@ class App extends Component {
                  });
                } else if (result.queryresult.$.success) {
                  that.setState({
-                   content: result.queryresult.pod
+                   content: result.queryresult.pod,
+                   loading: false
                  })
                }
             });
@@ -193,23 +202,31 @@ class App extends Component {
     );
   }
   renderDesc () {
-    if (this.state.content) {
-      this.renderVoice();
+    if (this.state.loading) {
       return (
-        <View style={styles.answerContainer}>
-          <Text style={[styles.textColor, styles.answer]} >{this.state.content[1].subpod[0].plaintext}</Text>         
-          <Text style={[styles.borderHalf, { borderBottomColor: '#567DE5' }]}>c</Text>
+        <View style={[styles.answerContainer, {justifyContent: 'center', alignItems:'center'}]}>
+          <ActivityIndicator size ={50} color="#ffffff" />
         </View>
       );
+    }else {
+      if (this.state.content) {
+        this.renderVoice();
+        return (
+          <View style={styles.answerContainer}>
+            <Text style={[styles.textColor, styles.answer]} >{this.state.content[1].subpod[0].plaintext}</Text>
+            <Text style={[styles.borderHalf, { borderBottomColor: '#567DE5' }]}>c</Text>
+          </View>
+        );
+      }else if (this.state.tryAgain) {
+        return (
+          <View style={styles.answerContainer}>
+            <Text style={[styles.textColor, styles.answer]} >No results found !!</Text>
+            <Text style={[styles.borderHalf, { borderBottomColor: '#567DE5' }]}>c</Text>
+          </View>
+        );
+      }
     }
-    if (this.state.tryAgain) {
-      return (
-        <View style={styles.answerContainer}>
-          <Text style={[styles.textColor, styles.answer]} >No results found !!</Text>
-          <Text style={[styles.borderHalf, { borderBottomColor: '#567DE5' }]}>c</Text>
-        </View>
-      );
-    }
+
   }
 
   renderVoice = () => {
@@ -274,36 +291,6 @@ class App extends Component {
           {this.renderStartStopButton()}
           {this._result()}
         </View>
-
-      {/* {this.renderDesc()}
-        <Text style={styles.instructions}>
-          Press the button and start speaking.
-        </Text>
-        <Text style={styles.stat}> {this.state.results[0]} </Text>
-        <TouchableHighlight onPress={this._startRecognizing.bind(this)}>
-          <Text style={styles.action}> 
-            Start
-          </Text>
-        </TouchableHighlight>
-        <TouchableHighlight onPress={this._stopRecognizing.bind(this)}>
-          <Text
-            style={styles.action}>
-            Stop Recognizing
-          </Text>
-        </TouchableHighlight>
-        <TouchableHighlight onPress={this._cancelRecognizing.bind(this)}>
-          <Text
-            style={styles.action}>
-            Cancel
-          </Text>
-        </TouchableHighlight>
-        <TouchableHighlight onPress={this._destroyRecognizer.bind(this)}>
-          <Text
-            style={styles.action}>
-            Destroy
-          </Text>
-        </TouchableHighlight>
-        {this._result()} */}
       </View>
     );
   }
@@ -321,6 +308,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     paddingRight: 20,
     paddingTop: 20,
+    paddingLeft: 20
   },
   question: {
     fontSize : 30,
